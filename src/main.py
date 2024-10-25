@@ -45,10 +45,13 @@ def main():
     heart = read_data(data_path)
     heart = preprocess_data(heart)
     X = PCA(heart.X, 100)
-    # Your code
 
-def visualize_cluster(x, y, clustering):
-    #Your code
+    learnt_clustering, learnt_centroids = KMeans.fit(KMeans, X)
+    visualize_cluster(learnt_clustering)
+
+def visualize_cluster(clustering):
+    plt.scatter(clustering)
+    plt.show()
 
 if __name__ == '__main__':
     main()
