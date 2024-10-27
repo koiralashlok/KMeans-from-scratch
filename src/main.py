@@ -46,11 +46,35 @@ def main():
     heart = preprocess_data(heart)
     X = PCA(heart.X, 100)
 
-    learnt_clustering, learnt_centroids = KMeans.fit(KMeans, X)
-    visualize_cluster(learnt_clustering)
+    # TODO Decide hyperparameters
+    init = 'random'
+    max_iter = 300
 
-def visualize_cluster(clustering):
-    plt.scatter(clustering)
+    # Perform fit
+    kmeans = KMeans(n_classifiers, init, max_iter)
+    learnt_clustering, learnt_centroids = kmeans.fit(X)
+
+    # Visualize
+    visualize_cluster(learnt_clustering, learnt_centroids)
+
+def visualize_cluster(clustering, centroids):
+    # Plotting
+    plt.figure(figsize=(10, 8))
+
+    colors = ['r', 'g', 'b']
+    for i, cluster in enumerate(clustering):
+        cluster_reduced = PCA(cluster, 2)  # Transform the cluster to 2D
+        plt.scatter(cluster_reduced[:, 0], cluster_reduced[:, 1], color=colors[i], label=f'Cluster {i + 1}', alpha=0.5)
+
+    # Plot centroids
+    centroid_reduced = PCA(np.vstack(centroids), 2)
+    plt.scatter(centroid_reduced[:, 0], centroid_reduced[:, 1], color='k', marker='x', s=200, label='Centroids')
+
+    plt.title('Cluster Visualization with Centroids')
+    plt.xlabel('PCA Component 1')
+    plt.ylabel('PCA Component 2')
+    plt.legend()
+    plt.grid()
     plt.show()
 
 if __name__ == '__main__':
