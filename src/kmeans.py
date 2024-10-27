@@ -15,6 +15,9 @@ class KMeans():
         self.max_iter = max_iter
         self.centroids = None # Initialized in initialize_centroids()
 
+    def is_cluster_empty(self, cluster):
+            return not cluster or cluster[0].size <= 0
+
     def fit(self, X: np.ndarray):
         '''
         A clustering is a list of clusters
@@ -24,22 +27,27 @@ class KMeans():
         iteration = 0
     
         def has_clustering_changed(old_clstr, new_clstr):
-            if not old_clstr or old_clstr[0].size <= 0:
+            # Empty old cluster implies 0th iteration, return true
+            if self.is_cluster_empty(old_clstr):
                 return True
             
             for i in range(0, self.n_clusters):
+                # Change detected in the ith cluster
                 if not np.array_equal(old_clstr[i], new_clstr[i]):
                     return True
-                
+            
+            # No change detected
             return False
 
+        # Initialize clustering lists
         clustering = [np.empty((0, 100)) for _ in range(self.n_clusters)]
         new_clustering = [np.empty((0, 100)) for _ in range(self.n_clusters)]
+
         while iteration < self.max_iter:
             # Calculate new centroids and clustering
             new_clustering, new_centroids = self.update_centroids(clustering, X)
 
-            # If no change, return
+            # If no change, return current clustering and centroids
             if not has_clustering_changed(clustering, new_clustering):
                 return (clustering, self.centroids)
             
@@ -56,10 +64,7 @@ class KMeans():
         new_centroids: np.ndarray = self.centroids.copy()
 
         # In the first call, clustering will be empty
-        def is_cluster_empty(clstr):
-            clstr[0].size > 0
-
-        if is_cluster_empty(clustering):
+        if not self.is_cluster_empty(clustering):
             for i in range(0, self.n_clusters):
                 new_centroids[i] = np.average(clustering[i], axis=0) # Average over row axis
         
@@ -81,8 +86,8 @@ class KMeans():
     def initialize_centroids(self, X: np.ndarray):
         """
         Initialize centroids either randomly or using kmeans++ method of initialization.
-        :param X:
-        :return:
+        :param X: ndarray containing dataset
+        :return: (n_cluster, d) ndarry with initial centroids
         """
         if self.init == 'random':
             self.centroids: np.ndarray = X[np.random.choice(X.shape[0], size=self.n_clusters, replace=False)]
@@ -96,11 +101,11 @@ class KMeans():
         """
         Computes the euclidean distance between all pairs (x,y) where x is a row in X1 and y is a row in X2.
         Tip: Using vectorized operations can hugely improve the efficiency here.
-        :param X1:
-        :param X2:
+        :param X1: ndarray of first dataset (usually the entire dataset)
+        :param X2: ndarray of second dataset (usually centroids)
         :return: Returns a matrix `dist` where `dist_ij` is the distance between row i in X1 and row j in X2.
         """
-        return np.sqrt(np.sum((X1[:, np.newaxis] - X2) ** 2, axis=2)) # can actually drop sqrt
+        return np.sqrt(np.sum((X1[:, np.newaxis] - X2) ** 2, axis=2)) # TODO can actually drop sqrt
 
 
     def silhouette(self, clustering: np.ndarray, X: np.ndarray):
