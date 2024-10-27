@@ -47,7 +47,7 @@ def main():
     X = PCA(heart.X, 100)
 
     # TODO Decide hyperparameters
-    init = 'random'
+    init = 'kmeans++'
     max_iter = 300
 
     # Perform fit

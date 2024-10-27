@@ -92,8 +92,15 @@ class KMeans():
         if self.init == 'random':
             self.centroids: np.ndarray = X[np.random.choice(X.shape[0], size=self.n_clusters, replace=False)]
         elif self.init == 'kmeans++':
-            # TODO
-            pass
+            self.centroids = np.zeros((self.n_clusters, X.shape[1]))
+            # KMeans++ initialization
+            self.centroids[0] = X[np.random.choice(X.shape[0])]  # Randomly choose the first centroid
+            for i in range(1, self.n_clusters):
+                distances = self.euclidean_distance(X, self.centroids[:i])  # Calculate distances to existing centroids
+                min_distances = np.min(distances, axis=1)  # Get the minimum distance for each point
+                probabilities = min_distances / np.sum(min_distances)  # Normalize to create a probability distribution
+                self.centroids[i] = X[np.random.choice(X.shape[0], p=probabilities)]  # Select next centroid based on probability
+
         else:
             raise ValueError('Centroid initialization method should either be "random" or "k-means++"')
 
@@ -108,6 +115,55 @@ class KMeans():
         return np.sqrt(np.sum((X1[:, np.newaxis] - X2) ** 2, axis=2)) # TODO can actually drop sqrt
 
 
-    def silhouette(self, clustering: np.ndarray, X: np.ndarray):
-        # TODO
-        pass
+    # def silhouette(self, clustering: np.ndarray, X: np.ndarray):
+    #     # TODO
+    #     pass
+
+    def silhouette_score(self, clustering: list[np.ndarray], X: np.ndarray) -> float:
+        """
+        Compute the silhouette score for the clustering.
+        
+        :param clustering: A list of ndarrays, where each ndarray contains the points of a cluster.
+        :param X: A 2D ndarray of shape (n_samples, n_features) representing the dataset.
+        :return: The average silhouette score for the clustering.
+        """
+        n_clusters = self.n_clusters
+        n_samples = X.shape[0]
+        
+        # Assign cluster labels to each sample
+        labels = np.zeros(n_samples, dtype=int)
+        for cluster_index, cluster in enumerate(clustering):
+            labels[np.isin(X, cluster)] = cluster_index
+        
+        total_silhouette = 0.0
+        
+        for i in range(n_samples):
+            # Get the current point and its cluster
+            current_point = X[i]
+            current_label = labels[i]
+            
+            # Calculate intra-cluster distance
+            same_cluster_points = clustering[current_label]
+            if len(same_cluster_points) > 1:
+                intra_distances = self.euclidean_distance(current_point.reshape(1, -1), same_cluster_points)
+                a_i = np.mean(intra_distances)
+            else:
+                a_i = 0  # No other points in the same cluster
+
+            # Calculate nearest cluster distance
+            nearest_dist = np.inf
+            for cluster_index, cluster in enumerate(clustering):
+                if cluster_index != current_label:
+                    inter_distances = self.euclidean_distance(current_point.reshape(1, -1), cluster)
+                    nearest_dist = min(nearest_dist, np.mean(inter_distances))
+            
+            # Silhouette score for the current point
+            if a_i == 0 and nearest_dist == 0:
+                s_i = 0  # If both distances are zero, the silhouette score is undefined
+            else:
+                s_i = (nearest_dist - a_i) / max(a_i, nearest_dist)
+
+            total_silhouette += s_i
+
+        # Return the average silhouette score
+        return total_silhouette / n_samples
