@@ -46,22 +46,27 @@ def main():
     heart = preprocess_data(heart)
     X = PCA(heart.X, 100)
 
-    # TODO Decide hyperparameters
+    # Hyperparameters
     init = 'kmeans++'
     max_iter = 300
 
     # Perform fit
     kmeans = KMeans(n_classifiers, init, max_iter)
-    learnt_clustering, learnt_centroids = kmeans.fit(X)
+    learnt_clustering, learnt_centroids, learnt_labels = kmeans.fit(X)
+
+    print(f'Silhouette Score for clustering: {kmeans.silhouette(learnt_clustering, learnt_centroids)}')
 
     # Visualize
     visualize_cluster(learnt_clustering, learnt_centroids)
 
-def visualize_cluster(clustering, centroids):
-    # Plotting
+def visualize_cluster(clustering: list[np.ndarray], centroids: np.ndarray):
+    # Cannot plot more than 6 clusters, not enough colors in matplotlib
+    if(len(clustering) > 6):
+        return
+
     plt.figure(figsize=(10, 8))
 
-    colors = ['r', 'g', 'b']
+    colors = ['b','g','r','c','m','y'] # k reserved for cluster centroids
     for i, cluster in enumerate(clustering):
         cluster_reduced = PCA(cluster, 2)  # Transform the cluster to 2D
         plt.scatter(cluster_reduced[:, 0], cluster_reduced[:, 1], color=colors[i], label=f'Cluster {i + 1}', alpha=0.5)
